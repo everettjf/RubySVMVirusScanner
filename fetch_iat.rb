@@ -1,15 +1,22 @@
 #!/usr/bin/env ruby
 
-require 'pedump'
+$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
+
+require 'rvs'
 require 'optparse'
 require 'sqlite3'
 
-class RVM
+#
+# weight :
+#   0 : none
+#   1 : health file only
+#   2 : both
+#   3 : virus only
+#
 
-end
 
-class RVM::CLI
-  attr_accessor :data, :argv
+class CLIFetchIAT < RVS
+  attr_accessor :argv
 
   def initialize(argv=ARGV)
     @argv = argv
@@ -28,9 +35,18 @@ class RVM::CLI
         print_file(filepath)
       end
 
-      opts.on '--dir','Save IAT and Sections into database in the directory' do
+      opts.on '--health','Save "iat_health.db" Heath File IAT and Sections into database in the directory' do
         dirpath = argv[1]
-        save_dir(dirpath)
+        save_dir(dirpath,false)
+      end
+
+      opts.on '--virus','Save "iat_virus.db" Virus File IAT and Sections into database in the directory' do
+        dirpath = argv[1]
+        save_dir(dirpath,true)
+      end
+
+      opts.on '--merge','Merge "iat_health.db" with "iat_virus.db" into "iat.db" , and adjust its weight' do
+        merge_file
       end
     end
 
@@ -40,41 +56,6 @@ class RVM::CLI
     end
 
   end
-
-  def fetch_file_imports_array(pedump, f)
-    data = pedump.imports(f)
-    return [] if !data || (data.respond_to?(:empty?) && data.empty?)
-
-    imports = []
-    data.each do |x|
-      case x
-        when PEdump::IMAGE_IMPORT_DESCRIPTOR
-          (Array(x.original_first_thunk) + Array(x.first_thunk)).uniq.each do |item|
-            next unless item
-            imports.push(item.name.to_s)
-          end
-        when PEdump::ImportedFunction
-          imports.push(x.name.to_s)
-        else
-          raise "invalid #{x.inspect}"
-      end
-    end
-    imports
-  end
-
-  def fetch_file_sections_array(pedump,f)
-    data = pedump.sections(f)
-    return [] if !data || (data.respond_to?(:empty?) && data.empty?)
-
-    sections = []
-    data.each do |s|
-      name = s.Name[/[^a-z0-9_.]/i] ? s.Name.inspect : s.Name
-      name = "#{name}\n          " if name.size > 8
-      sections.push(name.to_s)
-    end
-    sections
-  end
-
 
   def print_file(filepath)
     File.open(filepath,'rb') do |f|
@@ -97,25 +78,7 @@ class RVM::CLI
     end
   end
 
-  def traverse_files_in_dir(path, callback)
-    if File.directory?(path)
-      dir = Dir.open(path)
-      while name = dir.read
-        next if name == '.'
-        next if name == '..'
-        traverse_files_in_dir(path + '/' + name, callback)
-      end
-    else
-      callback.call(path)
-    end
-  end
-
-  def save_dir(dirpath)
-    # create db
-    dbpath = Dir.pwd + '/iat.db'
-    File.delete(dbpath) if File.exist?(dbpath)
-
-    db = SQLite3::Database.open(dbpath)
+  def create_tables(db)
     db.execute <<-SQL
       create table t_iat(
         name text primary key,
@@ -128,6 +91,16 @@ class RVM::CLI
         weight int
       )
     SQL
+  end
+
+  def save_dir(dirpath, isvirus)
+    # create db
+    dbname = isvirus ? '/iat_virus.db' : '/iat_health.db'
+    dbpath = Dir.pwd + dbname
+    File.delete(dbpath) if File.exist?(dbpath)
+
+    db = SQLite3::Database.open(dbpath)
+    create_tables(db)
 
     db.execute('begin transaction')
     traverse_files_in_dir(
@@ -140,7 +113,7 @@ class RVM::CLI
               imports = fetch_file_imports_array(pedump, f)
 
               imports.each do |name|
-                db.execute('replace into t_iat values(?,?)',[name,1])
+                db.execute('replace into t_iat values(?,?)',[name,0])
               end
             rescue => ex
               puts filepath, ex.message
@@ -149,7 +122,7 @@ class RVM::CLI
             begin
               sections = fetch_file_sections_array(pedump,f)
               sections.each do |name|
-                db.execute('replace into t_section values(?,?)',[name,1])
+                db.execute('replace into t_section values(?,?)',[name,0])
               end
             rescue => ex
               puts filepath, ex.message
@@ -159,9 +132,65 @@ class RVM::CLI
     )
     db.execute('end transaction')
   end
+
+  def merge_file
+    dbpath_health = Dir.pwd + '/iat_health.db'
+    dbpath_virus = Dir.pwd + '/iat_virus.db'
+    unless File.exist?(dbpath_health) && File.exist?(dbpath_virus)
+      puts 'iat_health.db and iat_virus.db required'
+      return
+    end
+
+    dbpath = Dir.pwd + '/iat.db'
+    File.delete(dbpath) if File.exist?(dbpath)
+
+    db = SQLite3::Database.open(dbpath)
+    create_tables(db)
+
+    db_health = SQLite3::Database.open(dbpath_health)
+    db_virus = SQLite3::Database.open(dbpath_virus)
+
+    # iat
+    iat_health = db_health.execute('select name from t_iat').flatten!
+    iat_virus = db_virus.execute('select name from t_iat').flatten!
+
+    iat_res = iat_health & iat_virus
+    iat_health_res = iat_health - iat_virus
+    iat_virus_res = iat_virus - iat_health
+
+    iat_res.each do |name|
+      db.execute('replace into t_iat values(?,?)',[name,2])
+    end
+    iat_health_res.each do |name|
+      db.execute('replace into t_iat values(?,?)',[name,1])
+    end
+    iat_virus_res.each do |name|
+      db.execute('replace into t_iat values(?,?)',[name,3])
+    end
+
+    # sections
+    sec_health = db_health.execute('select name from t_section').flatten!
+    sec_virus = db_virus.execute('select name from t_section').flatten!
+
+    sec_res = sec_health & sec_virus
+    sec_health_res = sec_health - sec_virus
+    sec_virus_res = sec_virus - sec_health
+
+    sec_res.each do |name|
+      db.execute('replace into t_section values(?,?)',[name,2])
+    end
+    sec_health_res.each do |name|
+      db.execute('replace into t_section values(?,?)',[name,1])
+    end
+    sec_virus_res.each do |name|
+      db.execute('replace into t_section values(?,?)',[name,3])
+    end
+
+    puts 'Merge Finish'
+  end
 end
 
 # run
-RVM::CLI.new.run
+CLIFetchIAT.new.run
 
 
