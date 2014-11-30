@@ -1,4 +1,13 @@
 RubySVMVirusScanner
 ===================
 
-Virus Scanner based on RubySVM
+# Environment
+
+> gem install rb-libsvm
+
+> gem install pedump
+
+
+# Usage
+todo
+
