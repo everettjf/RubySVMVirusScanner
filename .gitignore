@@ -38,3 +38,4 @@ build/
 .idea/inspectionProfiles/Project_Default.xml
 .idea/inspectionProfiles/profiles_settings.xml
 
+*.db

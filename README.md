@@ -7,6 +7,8 @@ RubySVMVirusScanner
 
 > gem install pedump
 
+> gem install sqlite3
+
 
 # Usage
 todo
