@@ -1,12 +1,8 @@
 #!/usr/bin/env ruby
-
-$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
-
-require 'rvs'
-require 'optparse'
-require 'sqlite3'
-
 #
+# This file is just a utility to produce the 'iat.db' database.
+# Get IAT and Sections of files in the directory , and insert into iat*.db with below weight.
+# So, you should prepare 2 directories which one is for health files and another is for virus files.
 # weight :
 #   0 : none
 #   1 : health file only
@@ -14,8 +10,13 @@ require 'sqlite3'
 #   3 : virus only
 #
 
+$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 
-class CLIFetchIAT < RVS
+require 'rvscore'
+require 'optparse'
+require 'sqlite3'
+
+class CLIFetchIAT < RVSCore
   attr_accessor :argv
 
   def initialize(argv=ARGV)
@@ -62,7 +63,7 @@ class CLIFetchIAT < RVS
       pedump = PEdump.new(filepath)
       puts "imports:"
       begin
-        imports = fetch_file_imports_array(pedump,f)
+        imports = fetch_pe_imports_array(pedump,f)
         p imports
       rescue => ex
         puts ex.message
@@ -70,7 +71,7 @@ class CLIFetchIAT < RVS
 
       puts "sections:"
       begin
-        sections = fetch_file_sections_array(pedump,f)
+        sections = fetch_pe_sections_array(pedump,f)
         p sections
       rescue => ex
         puts ex.message
@@ -110,7 +111,7 @@ class CLIFetchIAT < RVS
             pedump = PEdump.new(filepath)
 
             begin
-              imports = fetch_file_imports_array(pedump, f)
+              imports = fetch_pe_imports_array(pedump, f)
 
               imports.each do |name|
                 db.execute('replace into t_iat values(?,?)',[name,0])
@@ -120,7 +121,7 @@ class CLIFetchIAT < RVS
             end
 
             begin
-              sections = fetch_file_sections_array(pedump,f)
+              sections = fetch_pe_sections_array(pedump,f)
               sections.each do |name|
                 db.execute('replace into t_section values(?,?)',[name,0])
               end

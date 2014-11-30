@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
+#
 # ruby virus scanner
+# This file is some utilities for the basic scanner
+#
 
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 
@@ -7,9 +10,9 @@ require 'pedump'
 require 'optparse'
 require 'sqlite3'
 
-class RVS
+class RVSCore
 
-  def fetch_file_imports_array(pedump, f)
+  def fetch_pe_imports_array(pedump, f)
     data = pedump.imports(f)
     return [] if !data || (data.respond_to?(:empty?) && data.empty?)
 
@@ -30,7 +33,7 @@ class RVS
     imports
   end
 
-  def fetch_file_sections_array(pedump,f)
+  def fetch_pe_sections_array(pedump,f)
     data = pedump.sections(f)
     return [] if !data || (data.respond_to?(:empty?) && data.empty?)
 
@@ -43,7 +46,8 @@ class RVS
     sections
   end
 
-
+  # @param [String] path
+  # @param [Proc(String)] callback
   def traverse_files_in_dir(path, callback)
     if File.directory?(path)
       dir = Dir.open(path)
@@ -55,5 +59,5 @@ class RVS
     else
       callback.call(path)
     end
-    end
+  end
 end

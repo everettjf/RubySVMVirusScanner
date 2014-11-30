@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# This file is used to product the 'rvs.model' file.
+# This file is used to scan.
 #
 #
 
@@ -8,7 +8,7 @@ $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 
 require "rvscore"
 
-class RVSTrainCLI < RVSCore
+class RVSScanCLI < RVSCore
   attr_accessor :argv
 
   def initialize(argv=ARGV)
@@ -17,14 +17,10 @@ class RVSTrainCLI < RVSCore
 
   def run
     optparser = OptionParser.new do |opts|
-      opts.banner = 'Usage: train [options]'
+      opts.banner = 'Usage: scan [options]'
       opts.on '--version','Print version information and exit' do
         puts '0.0.0.1'
         exit
-      end
-
-      opts.on '--train','Train on specified ' do
-
       end
 
     end
