@@ -26,10 +26,6 @@ class CLIFetchIAT < RVSCore
   def run
     optparser = OptionParser.new do |opts|
       opts.banner = 'Usage: fetch_iat [options]'
-      opts.on '--version','Print version information and exit' do
-        puts '0.0.0.1'
-        exit
-      end
 
       opts.on '--file','Print a file IAT and Sections' do
         filepath = argv[1]
@@ -192,6 +188,8 @@ class CLIFetchIAT < RVSCore
 end
 
 # run
-CLIFetchIAT.new.run
+if $0 == __FILE__
+  CLIFetchIAT.new.run
+end
 
 
