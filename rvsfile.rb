@@ -26,10 +26,12 @@ class RVSFile < RVSCore
   def parse?
     @filesize = File.size(filepath)
 
-    return false if filesize <= 0
+    return false if filesize == 0
 
     File.open(filepath,'rb') do |f|
-      pedump = PEdump.new(filepath)
+      pedump = PEdump.new(filepath).tap do |x|
+        x.logger.level = Logger::UNKNOWN
+      end
 
       begin
         @imports = fetch_pe_imports_array(pedump, f)
@@ -43,6 +45,8 @@ class RVSFile < RVSCore
         puts filepath, ex.message
       end
     end
+
+    return false if @imports.empty? && @sections.empty?
 
     true
   end

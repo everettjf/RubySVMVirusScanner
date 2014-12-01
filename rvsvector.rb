@@ -25,12 +25,12 @@ class RVSVector
 
   def parse?
     unless @file.parse?
-      puts 'file parse failed.'
+      # print 'none pe file :', filepath, "\n"
       return false
     end
 
     unless prepare_map?
-      puts 'file prepare failed.'
+      print 'file prepare map failed : ', filepath, "\n"
       return false
     end
 

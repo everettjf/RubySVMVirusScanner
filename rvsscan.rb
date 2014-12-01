@@ -44,13 +44,13 @@ class RVSScanCLI < RVSCore
     large_dataset = []
     large_labels = []
     { health_dir => 0 , virus_dir => 1}.each do |dir, label|
-      traverse_files_in_dir(
+      traverse_files_in_path(
           dir,
           lambda do |filepath|
             vec = RVSVector.new(filepath)
             return unless vec.parse?
 
-            large_dataset.push(vec)
+            large_dataset.push(vec.values)
             large_labels.push(label)
           end
       )
@@ -75,25 +75,32 @@ class RVSScanCLI < RVSCore
     # load model
     model = Libsvm::Model.load('virusdb.model')
 
-    if File.directory?(path)
-      # dir traverse
-      traverse_files_in_dir(
-          path,
-          lambda do |filepath|
-            scan(filepath)
+    filecount = 0
+    viruscount = 0
+
+    traverse_files_in_path(
+        path,
+        lambda do |filepath|
+          filecount = filecount + 1
+
+          puts filepath
+          pred = scanfile(filepath,model)
+          if pred == 0.0
+            print ':) (',pred,')sames like a health file ',filepath,"\n"
+          else
+            viruscount = viruscount + 1
+            print 'O_O (',pred,')sames like a virus file', filepath,"\n"
           end
-      )
-    else
-      # file
-      vec = RVSVector.new(path)
-      pred = model.predict(Libsvm::Node.features(vec))
-      print 'pridiction :',pred
-      if pred == 0.0
-        puts 'sames like a health file'
-      else
-        puts 'sames like a virus'
-      end
-    end
+        end
+    )
+
+    print 'virus / total = ',viruscount ,'/',filecount,"\n"
+  end
+
+  def scanfile(filepath, model)
+    vec = RVSVector.new(filepath)
+    pred = model.predict(Libsvm::Node.features(vec.values))
+    return pred
   end
 end
 

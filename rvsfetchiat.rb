@@ -15,6 +15,7 @@ $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'rvscore'
 require 'optparse'
 require 'sqlite3'
+require 'rvsfile'
 
 class CLIFetchIAT < RVSCore
   attr_accessor :argv
@@ -55,24 +56,16 @@ class CLIFetchIAT < RVSCore
   end
 
   def print_file(filepath)
-    File.open(filepath,'rb') do |f|
-      pedump = PEdump.new(filepath)
-      puts "imports:"
-      begin
-        imports = fetch_pe_imports_array(pedump,f)
-        p imports
-      rescue => ex
-        puts ex.message
-      end
-
-      puts "sections:"
-      begin
-        sections = fetch_pe_sections_array(pedump,f)
-        p sections
-      rescue => ex
-        puts ex.message
-      end
+    file = RVSFile.new(filepath)
+    unless file.parse?
+      puts 'parse file failed.'
     end
+
+    p 'imports:'
+    p file.imports
+
+    p 'sections:'
+    p file.sections
   end
 
   def create_tables(db)
@@ -100,30 +93,33 @@ class CLIFetchIAT < RVSCore
     create_tables(db)
 
     db.execute('begin transaction')
-    traverse_files_in_dir(
+    traverse_files_in_path(
         dirpath,
         lambda do |filepath|
-          File.open(filepath,'rb') do |f|
-            pedump = PEdump.new(filepath)
+          file = RVSFile.new(filepath)
 
-            begin
-              imports = fetch_pe_imports_array(pedump, f)
+          unless file.parse?
+            print 'file can not parse', filepath, '\n'
+            next
+          end
 
-              imports.each do |name|
-                db.execute('replace into t_iat values(?,?)',[name,0])
-              end
-            rescue => ex
-              puts filepath, ex.message
+          begin
+            imports = file.imports
+
+            imports.each do |name|
+              db.execute('replace into t_iat values(?,?)',[name,0])
             end
+          rescue => ex
+            puts filepath, ex.message
+          end
 
-            begin
-              sections = fetch_pe_sections_array(pedump,f)
-              sections.each do |name|
-                db.execute('replace into t_section values(?,?)',[name,0])
-              end
-            rescue => ex
-              puts filepath, ex.message
+          begin
+            sections = fetch_pe_sections_array(pedump,f)
+            sections.each do |name|
+              db.execute('replace into t_section values(?,?)',[name,0])
             end
+          rescue => ex
+            puts filepath, ex.message
           end
         end
     )

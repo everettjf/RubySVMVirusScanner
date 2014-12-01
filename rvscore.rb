@@ -48,13 +48,13 @@ class RVSCore
 
   # @param [String] path
   # @param [Proc(String)] callback
-  def traverse_files_in_dir(path, callback)
+  def traverse_files_in_path(path, callback)
     if File.directory?(path)
       dir = Dir.open(path)
       while name = dir.read
         next if name == '.'
         next if name == '..'
-        traverse_files_in_dir(path + '/' + name, callback)
+        traverse_files_in_path(path + '/' + name, callback)
       end
     else
       callback.call(path)

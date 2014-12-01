@@ -39,3 +39,4 @@ build/
 .idea/inspectionProfiles/profiles_settings.xml
 
 *.db
+*.model
