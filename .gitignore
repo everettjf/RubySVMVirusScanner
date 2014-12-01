@@ -40,3 +40,4 @@ build/
 
 *.db
 *.model
+*.dataset

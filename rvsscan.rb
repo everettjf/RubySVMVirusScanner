@@ -41,6 +41,8 @@ class RVSScanCLI < RVSCore
   end
 
   def train(health_dir, virus_dir)
+    f = File.open('train.dataset','w')
+
     large_dataset = []
     large_labels = []
     { health_dir => 0 , virus_dir => 1}.each do |dir, label|
@@ -52,6 +54,14 @@ class RVSScanCLI < RVSCore
 
             large_dataset.push(vec.values)
             large_labels.push(label)
+
+            f.print label,' '
+
+            vec.values.each_with_index do |item, index|
+              f.print index+1,':',item,' '
+            end
+            f.print "\n"
+
           end
       )
     end
@@ -61,7 +71,7 @@ class RVSScanCLI < RVSCore
 
     parameter.cache_size = 1 # in megabytes
     parameter.eps = 0.001
-    parameter.c = 10
+    parameter.c = 32
 
     dataset = large_dataset.map{ |ary| Libsvm::Node.features(ary)}
     problem.set_examples(large_labels, dataset)

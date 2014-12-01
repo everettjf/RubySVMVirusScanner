@@ -46,9 +46,9 @@ class RVSVector
     if @file.filesize == 0
       @values.push(0.0)
     elsif @file.filesize < 1 * 1024 * 1024
-      @values.push(0.8)
+      @values.push(1.0)
     elsif @file.filesize < 10 * 1024 * 1024
-      @values.push(0.3)
+      @values.push(0.5)
     else
       @values.push(0.1)
     end
