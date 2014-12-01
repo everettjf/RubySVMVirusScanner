@@ -45,7 +45,7 @@ class RVSScanCLI < RVSCore
 
     large_dataset = []
     large_labels = []
-    { health_dir => 0 , virus_dir => 1}.each do |dir, label|
+    { health_dir => -1 , virus_dir => 1}.each do |dir, label|
       traverse_files_in_path(
           dir,
           lambda do |filepath|
@@ -57,8 +57,8 @@ class RVSScanCLI < RVSCore
 
             f.print label,' '
 
-            vec.values.each_with_index do |item, index|
-              f.print index+1,':',item,' '
+            vec.values.each do |key,value|
+              f.print key,':',value,' '
             end
             f.print "\n"
 
@@ -69,9 +69,13 @@ class RVSScanCLI < RVSCore
     problem = Libsvm::Problem.new
     parameter = Libsvm::SvmParameter.new
 
-    parameter.cache_size = 1 # in megabytes
     parameter.eps = 0.001
+    parameter.cache_size = 1
     parameter.c = 32
+    parameter.svm_type = Libsvm::SvmType::C_SVC
+    parameter.kernel_type = Libsvm::KernelType::RBF
+    parameter.gamma = 1.0/128
+    parameter.label_weights = {1=> -1}
 
     dataset = large_dataset.map{ |ary| Libsvm::Node.features(ary)}
     problem.set_examples(large_labels, dataset)
@@ -95,11 +99,9 @@ class RVSScanCLI < RVSCore
 
           puts filepath
           pred = scanfile(filepath,model)
-          if pred == 0.0
-            print ':) (',pred,')sames like a health file ',filepath,"\n"
-          else
+          if pred != -1
             viruscount = viruscount + 1
-            print 'O_O (',pred,')sames like a virus file', filepath,"\n"
+            print 'O_O (',pred,') virus file', filepath,"\n"
           end
         end
     )

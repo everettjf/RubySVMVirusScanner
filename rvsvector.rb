@@ -12,12 +12,15 @@ require 'rvscore'
 require 'rvsfile'
 require 'pp'
 
+#
+# values should like this : {11 => 0.11, 21 => 0.21, 101 => 0.99 })
+#
 
 class RVSVector
   attr_reader :filepath, :values
   def initialize(filepath)
     @filepath = filepath
-    @values = []
+    @values = {}
     @iat_map = {}
     @section_map = {}
     @file = RVSFile.new(filepath)
@@ -34,23 +37,29 @@ class RVSVector
       return false
     end
 
-    @values = []
-    push_size_vector
-    push_iat_vector
-    push_section_vector
+    plain_values = []
+    push_size_vector(plain_values)
+    push_iat_vector(plain_values)
+    push_section_vector(plain_values)
+
+    # plain_values [] to values {}
+    @values = {}
+    plain_values.each_with_index do |item,index|
+      @values[index+1] = item if item != 0.0
+    end
 
     true
   end
 
-  def push_size_vector
+  def push_size_vector(plain_values)
     if @file.filesize == 0
-      @values.push(0.0)
+      plain_values.push(0.0)
     elsif @file.filesize < 1 * 1024 * 1024
-      @values.push(1.0)
+      plain_values.push(1.0)
     elsif @file.filesize < 10 * 1024 * 1024
-      @values.push(0.5)
+      plain_values.push(0.5)
     else
-      @values.push(0.1)
+      plain_values.push(0.1)
     end
   end
 
@@ -78,7 +87,7 @@ class RVSVector
     true
   end
 
-  def push_iat_vector
+  def push_iat_vector(plain_values)
     file_map = {}
     @file.imports.each do |name|
       file_map[name] = nil # we do not care the value
@@ -86,15 +95,14 @@ class RVSVector
 
     @iat_map.each do |name, value|
       if file_map.has_key?(name)
-        @values.push(value)
+        plain_values.push(value)
       else
-        @values.push(0.0)
+        plain_values.push(0.0)
       end
     end
-
   end
 
-  def push_section_vector
+  def push_section_vector(plain_values)
     file_map = {}
     @file.sections.each do |name|
       file_map[name] = nil
@@ -102,9 +110,9 @@ class RVSVector
 
     @section_map.each do |name,value|
       if file_map.has_key?(name)
-        @values.push(value)
+        plain_values.push(value)
       else
-        @values.push(0.0)
+        plain_values.push(0.0)
       end
     end
   end
