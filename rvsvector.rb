@@ -121,7 +121,19 @@ class RVSVector
   end
 
   def push_packer_vector(plain_values)
-    plain_values.push(@file.packer.empty? ? 1.0 : 0.0)
+    if @file.packer.empty?
+      plain_values.push(0.0)
+      return
+    end
+
+    ['MS Visual','Microsoft'].each do |x|
+      if @file.packer.include?(x)
+        plain_values.push(0.0)
+        return
+      end
+    end
+
+    plain_values.push(1.0)
   end
 end
 
