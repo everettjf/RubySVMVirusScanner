@@ -39,8 +39,11 @@ class RVSVector
 
     plain_values = []
     push_size_vector(plain_values)
-    push_iat_vector(plain_values)
+    push_company_vector(plain_values)
+    push_version_vector(plain_values)
+    push_packer_vector(plain_values)
     push_section_vector(plain_values)
+    push_iat_vector(plain_values)
 
     # plain_values [] to values {}
     @values = {}
@@ -94,11 +97,7 @@ class RVSVector
     end
 
     @iat_map.each do |name, value|
-      if file_map.has_key?(name)
-        plain_values.push(value)
-      else
-        plain_values.push(0.0)
-      end
+      plain_values.push(file_map.has_key?(name) ? value : 0.0)
     end
   end
 
@@ -109,18 +108,27 @@ class RVSVector
     end
 
     @section_map.each do |name,value|
-      if file_map.has_key?(name)
-        plain_values.push(value)
-      else
-        plain_values.push(0.0)
-      end
+      plain_values.push(file_map.has_key?(name) ? value : 0.0)
     end
+  end
+
+  def push_company_vector(plain_values)
+    plain_values.push(@file.company.empty? ? 1.0 : 0.0)
+  end
+
+  def push_version_vector(plain_values)
+    plain_values.push(@file.version.empty? ? 1.0 : 0.0)
+  end
+
+  def push_packer_vector(plain_values)
+    plain_values.push(@file.packer.empty? ? 1.0 : 0.0)
   end
 end
 
 # test
 if $0 == __FILE__
-  vec = RVSVector.new('/Users/everettjf/Virus/VirusSignList_Free_131105/Samples/virussign.com_0a0c4498d0e8deff2be8d35a4157da50.vir')
+  fpath = File.expand_path(File.dirname(__FILE__) + '/pesample/' + 'notpe.txt' )
+  vec = RVSVector.new(fpath)
   vec.parse?
 
   p vec.values.size
