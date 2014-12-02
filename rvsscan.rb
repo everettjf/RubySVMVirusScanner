@@ -111,7 +111,7 @@ class RVSScanCLI < RVSCore
           # result
           if pred.first != -1
             viruscount = viruscount + 1
-            print 'O_O (',pred.first,' , ',pred.last,') virus file', filepath,"\n"
+            #print 'O_O (',pred.first,' , ',pred.last,') virus file', filepath,"\n"
           end
         end
     )
