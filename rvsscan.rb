@@ -41,6 +41,8 @@ class RVSScanCLI < RVSCore
   end
 
   def train(health_dir, virus_dir)
+    print 'Start trainning on health_dir ',health_dir,'  and virus_dir ',virus_dir,"\n"
+
     f = File.open('train.dataset','w')
 
     large_dataset = []
@@ -71,21 +73,24 @@ class RVSScanCLI < RVSCore
 
     parameter.eps = 0.001
     parameter.cache_size = 1
-    parameter.c = 32
-    parameter.svm_type = Libsvm::SvmType::C_SVC
-    parameter.kernel_type = Libsvm::KernelType::RBF
-    parameter.gamma = 1.0/128
-    parameter.label_weights = {1=> -1}
+    parameter.c = 10 #32
+    #parameter.kernel_type = Libsvm::KernelType::RBF
+    #parameter.gamma = 1.0/32 # 1.0/128
+    #parameter.label_weights = {1=> -1}
 
     dataset = large_dataset.map{ |ary| Libsvm::Node.features(ary)}
+
     problem.set_examples(large_labels, dataset)
 
     model = Libsvm::Model.train(problem, parameter)
     model.save('virusdb.model')
 
+    puts 'Train completed.'
   end
 
   def scan(path)
+    print 'Start scan ',path,"\n"
+
     # load model
     model = Libsvm::Model.load('virusdb.model')
 
@@ -97,21 +102,28 @@ class RVSScanCLI < RVSCore
         lambda do |filepath|
           filecount = filecount + 1
 
-          puts filepath
           pred = scanfile(filepath,model)
-          if pred != -1
+          if nil == pred
+            # print 'error scan :',filepath,"\n"
+            return
+          end
+
+          # result
+          if pred.first != -1
             viruscount = viruscount + 1
-            print 'O_O (',pred,') virus file', filepath,"\n"
+            print 'O_O (',pred.first,' , ',pred.last,') virus file', filepath,"\n"
           end
         end
     )
 
-    print 'virus / total = ',viruscount ,'/',filecount,"\n"
+    print 'Scan completed. virus / total = ',viruscount ,'/',filecount,"\n"
   end
 
   def scanfile(filepath, model)
     vec = RVSVector.new(filepath)
-    pred = model.predict(Libsvm::Node.features(vec.values))
+    return nil unless vec.parse?
+
+    pred = model.predict_probability(Libsvm::Node.features(vec.values))
     return pred
   end
 end

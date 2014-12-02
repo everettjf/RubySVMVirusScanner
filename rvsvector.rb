@@ -48,7 +48,8 @@ class RVSVector
     # plain_values [] to values {}
     @values = {}
     plain_values.each_with_index do |item,index|
-      @values[index+1] = item if item != 0.0
+      #@values[index+1] = item if item != 0.0
+      @values[index+1] = item
     end
 
     true

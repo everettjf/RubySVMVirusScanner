@@ -39,22 +39,16 @@ class RVSFile < RVSCore
         begin
           @imports = fetch_pe_imports_array(pedump, f)
         rescue => ex
-          puts filepath, ex.message
+          #puts filepath, ex.message
         end
 
         begin
           @sections = fetch_pe_sections_array(pedump,f)
         rescue => ex
-          puts filepath, ex.message
+          #puts filepath, ex.message
         end
 
         return false if @imports.empty? && @sections.empty?
-
-        begin
-          @packer = pedump.packer.first.name
-        rescue => ex
-          puts filepath, ex.message
-        end
 
         begin
           data = pedump.version_info(f)
@@ -72,7 +66,12 @@ class RVSFile < RVSCore
             end
           end
         rescue => ex
-          puts filepath, ex.message
+          #puts filepath, ex.message
+        end
+
+        begin
+          @packer = pedump.packer.first.name
+        rescue
         end
       end
     rescue

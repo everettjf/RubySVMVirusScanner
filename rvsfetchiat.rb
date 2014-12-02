@@ -99,7 +99,7 @@ class CLIFetchIAT < RVSCore
           file = RVSFile.new(filepath)
 
           unless file.parse?
-            print 'file can not parse', filepath, '\n'
+            # print 'file can not parse', filepath, '\n'
             next
           end
 
@@ -114,7 +114,7 @@ class CLIFetchIAT < RVSCore
           end
 
           begin
-            sections = fetch_pe_sections_array(pedump,f)
+            sections = file.sections
             sections.each do |name|
               db.execute('replace into t_section values(?,?)',[name,0])
             end
