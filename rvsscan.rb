@@ -124,6 +124,7 @@ class RVSScanCLI < RVSCore
     return nil unless vec.parse?
 
     pred = model.predict_probability(Libsvm::Node.features(vec.values))
+    print pred
     return pred
   end
 end

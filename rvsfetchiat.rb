@@ -151,6 +151,7 @@ class CLIFetchIAT < RVSCore
     iat_health_res = iat_health - iat_virus
     iat_virus_res = iat_virus - iat_health
 
+    db.execute('begin transaction')
     iat_res.each do |name|
       db.execute('replace into t_iat values(?,?)',[name,2])
     end
@@ -160,6 +161,7 @@ class CLIFetchIAT < RVSCore
     iat_virus_res.each do |name|
       db.execute('replace into t_iat values(?,?)',[name,3])
     end
+    db.execute('end transaction')
 
     # sections
     sec_health = db_health.execute('select name from t_section').flatten!
@@ -169,6 +171,7 @@ class CLIFetchIAT < RVSCore
     sec_health_res = sec_health - sec_virus
     sec_virus_res = sec_virus - sec_health
 
+    db.execute('begin transaction')
     sec_res.each do |name|
       db.execute('replace into t_section values(?,?)',[name,2])
     end
@@ -178,6 +181,7 @@ class CLIFetchIAT < RVSCore
     sec_virus_res.each do |name|
       db.execute('replace into t_section values(?,?)',[name,3])
     end
+    db.execute('end transaction')
 
     puts 'Merge Finish'
   end
@@ -187,5 +191,6 @@ end
 if $0 == __FILE__
   CLIFetchIAT.new.run
 end
+
 
 
