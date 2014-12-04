@@ -61,6 +61,21 @@ class CLIFetchIAT < RVSCore
       puts 'parse file failed.'
     end
 
+    p 'filepath:'
+    p file.filepath
+
+    p 'filesize:'
+    p file.filesize
+
+    p 'version:'
+    p file.version
+
+    p 'company:'
+    p file.company
+
+    p 'packer:'
+    p file.packer
+
     p 'imports:'
     p file.imports
 

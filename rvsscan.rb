@@ -74,6 +74,7 @@ class RVSScanCLI < RVSCore
     parameter.eps = 0.001
     parameter.cache_size = 1
     parameter.c = 10 #32
+    parameter.probability = 1
     #parameter.kernel_type = Libsvm::KernelType::RBF
     #parameter.gamma = 1.0/32 # 1.0/128
     #parameter.label_weights = {1=> -1}
@@ -89,6 +90,7 @@ class RVSScanCLI < RVSCore
   end
 
   def scan(path)
+    puts '***************************Scan Start******************************'
     print 'Start scan ',path,"\n"
 
     # load model
@@ -111,12 +113,16 @@ class RVSScanCLI < RVSCore
           # result
           if pred.first != -1
             viruscount = viruscount + 1
-            #print 'O_O (',pred.first,' , ',pred.last,') virus file', filepath,"\n"
+            print 'O_O Virus (',pred.first,' , ',pred.last,') ', filepath,"\n"
           end
         end
     )
 
-    print 'Scan completed. virus / total = ',viruscount ,'/',filecount,"\n"
+    puts '--------------------------Scan Result:-----------------------------'
+    puts 'Scan completed.'
+    puts path
+    print 'Virus / Total = ',viruscount ,'/',filecount,' (',viruscount.to_f / filecount.to_f,')'"\n"
+    puts '**************************Scan Compeleted**************************'
   end
 
   def scanfile(filepath, model)
@@ -124,7 +130,6 @@ class RVSScanCLI < RVSCore
     return nil unless vec.parse?
 
     pred = model.predict_probability(Libsvm::Node.features(vec.values))
-    print pred
     return pred
   end
 end

@@ -77,10 +77,12 @@ class RVSCore
   end
 
   def fetch_pe_packer_name(pedump)
+    packer = ''
     begin
-      pedump.packer.first.name.encode('utf-8')
+      packer = pedump.packer.first.name.encode('utf-8')
     rescue
     end
+    packer
   end
 
   # @param [String] path
