@@ -140,7 +140,7 @@ end
 
 # test
 if $0 == __FILE__
-  fpath = File.expand_path(File.dirname(__FILE__) + '/pesample/' + 'notpe.txt' )
+  fpath = File.expand_path(File.dirname(__FILE__) + '/pesample/' + 'notepad.exe' )
   vec = RVSVector.new(fpath)
   vec.parse?
 
