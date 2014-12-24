@@ -51,4 +51,5 @@ ruby rvsscan.rb --scan /Users/everettjf/Virus/train/test_virus
 ruby rvsscan.rb --scan /Users/everettjf/Virus/train/test_health
 ```
 
-
+# 相关文章
+[编写简易病毒扫描程序](http://everettjf.github.io/security/2014/12/07/How-To-Write-A-Simple-Virus-Scanner/)
